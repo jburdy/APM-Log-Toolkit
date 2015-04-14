@@ -1,6 +1,6 @@
 #!/usr/bin/env python
  
-import sdlog2_dump
+import APMlogParserPOC
 from datetime import datetime, timedelta
 from dateutil import tz
  
@@ -62,10 +62,10 @@ def printMsg(msg):
  
  
  
-p = sdlog2_dump.SDLog2Parser()
+p = APMlogParserPOC.SDLog2Parser()
 p.setDebugOut(True)
 p.setCorrectErrors(True)
-d = p.process('APMPlanner/dataflashLogs/2015-04-12_MissionChateauChampvent.bin')
+d = p.process('testLog/log.bin')
  
  
  
