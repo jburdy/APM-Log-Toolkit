@@ -55,3 +55,6 @@ docs/_build/
 
 # PyBuilder
 target/
+
+# ajout par JB
+.c9/
