@@ -6,6 +6,7 @@ def Parse(logBinFilePath):
     
     
     
+    
 if __name__ == "__main__":
     # Pour les tests...
     import sys
