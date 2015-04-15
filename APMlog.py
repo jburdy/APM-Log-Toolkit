@@ -8,7 +8,7 @@ def getDict(logBinFilePath):
     
 def getJSON(logBinFilePath):
     import json
-    return  json.dumps(getDictFromLog(logBinFilePath))
+    return  json.dumps(getDict(logBinFilePath))
     
     
 if __name__ == "__main__":
