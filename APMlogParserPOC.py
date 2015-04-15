@@ -351,7 +351,11 @@ def jbConvert(data):
         #print(i)
         dicTemp = {}
         for detail in logLine[1]:
-            key, value = detail.split('=')
+            try:
+                key, value = detail.split('=')
+            except:
+                print("ERROR key, value = detail.split('=')", detail)
+                raise
             try: # on essaye de convertir en nombre
                 if value.find('.') < 0:
                     dicTemp[key] = int(value)
@@ -362,6 +366,13 @@ def jbConvert(data):
         logLine[1] = dicTemp
         #print(i) 
     return data
+    
+    
+def Parse(logBinFilePath):
+    p = SDLog2Parser()
+    p.setDebugOut(True)
+    p.setCorrectErrors(True)
+    return p.process(logBinFilePath)
  
 if __name__ == "__main__":
     p = SDLog2Parser()

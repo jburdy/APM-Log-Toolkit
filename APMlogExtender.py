@@ -66,12 +66,19 @@ def printMsg(msg):
  
  
  
-p = APMlogParserPOC.SDLog2Parser()
-p.setDebugOut(True)
-p.setCorrectErrors(True)
-d = p.process('testLog/log.bin')
+
+
  
- 
- 
-for i in d:
-    printMsg(i)
+
+def Extend(logDict):
+    return logDict
+
+if __name__ == "__main__":
+
+
+    import APMlogParserPOC
+    d = APMlogParserPOC.Parse('testLog/log.bin')
+    
+    for i in d:
+        printMsg(i)
+    
