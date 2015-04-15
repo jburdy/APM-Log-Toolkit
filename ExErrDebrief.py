@@ -8,9 +8,7 @@ import APMlog
 # http://www.gpsvisualizer.com/
 
 d = APMlog.getDict('testLog/log.bin')
-j = APMlog.getJSON('testLog/log.bin')
 
 for err in filter(lambda x: x[0]=='ERR', d)[-50:]:
     print err
     
-print j
