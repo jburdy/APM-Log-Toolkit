@@ -125,41 +125,67 @@ class SDLog2Parser:
         first_data_msg = True
         f = open(fn, "rb")
         bytes_read = 0
+        
         while True:
+            # Reading 8192 bytes => 8KB
             chunk = f.read(self.BLOCK_SIZE)
+            #print(self.__buffer)
+             
             if len(chunk) == 0:
                 break
             self.__buffer = self.__buffer[self.__ptr:] + chunk
+            ##print(self.__buffer)
+            #return
             self.__ptr = 0
+            # Loop to read the 3 bytes contained in the header
             while self.__bytesLeft() >= self.MSG_HEADER_LEN:
+                # Reading the 2 first bytes
                 head1 = self.__buffer[self.__ptr]
                 head2 = self.__buffer[self.__ptr+1]
+
+                # If one header is incorrect, it can leads to an exception if there is no error correction
                 if (head1 != self.MSG_HEAD1 or head2 != self.MSG_HEAD2):
                     if self.__correct_errors:
                         self.__ptr += 1
                         continue
                     else:
                         raise Exception("Invalid header at %i (0x%X): %02X %02X, must be %02X %02X" % (bytes_read + self.__ptr, bytes_read + self.__ptr, head1, head2, self.MSG_HEAD1, self.MSG_HEAD2))
+                # Reading message type (3rd byte)
                 msg_type = self.__buffer[self.__ptr+2]
+                
+                # If the current message describe the format of a message type, 
                 if msg_type == self.MSG_TYPE_FORMAT:
                     # parse FORMAT message
+                    # If not enough bytes in buffer to have message information, we exit the loop
                     if self.__bytesLeft() < self.MSG_FORMAT_PACKET_LEN:
                         break
+                    # Gathering information about the format of a message type
                     self.__parseMsgDescr()
+                # If the current message does not describe a message type, it means it 
+                # contains values 
                 else:
-                    # parse data message
+                    # getting message description in the tuple of description we previously create
+                    # using function __parseMsgDescr(). The description is stored in a tuple with 
+                    # the following structure :
+                    # (msg_length, msg_name, msg_format, msg_labels, msg_struct, msg_mults)
                     msg_descr = self.__msg_descrs[msg_type]
+                    # If no information found
                     if msg_descr == None:
                         raise Exception("Unknown msg type: %i" % msg_type)
+                    
                     msg_length = msg_descr[0]
+                    # Checking if the is enough bytes in the buffer to actually store the message
                     if self.__bytesLeft() < msg_length:
                         break
+                    # First message operations
                     if first_data_msg:
                         # build CSV columns and init data map
                         if not self.__debug_out:
                             self.__initCSV()
                         first_data_msg = False
+                    
                     self.__parseMsg(msg_descr)
+                
             bytes_read += self.__ptr
             if not self.__debug_out and self.__time_msg != None and self.__csv_updated:
                 self.__printCSVRow()
@@ -213,29 +239,46 @@ class SDLog2Parser:
         else:
             data = struct.unpack(self.MSG_FORMAT_STRUCT, str(self.__buffer[self.__ptr + 3 : self.__ptr + self.MSG_FORMAT_PACKET_LEN]))
         msg_type = data[0]
+        # Recheck the value to be sure that this function has not been called by mistake
         if msg_type != self.MSG_TYPE_FORMAT:
             msg_length = data[1]
+            # Extracting message name 
             msg_name = _parseCString(data[2])
+            # Extracting the format of the message. This describes the structure of the message
             msg_format = _parseCString(data[3])
+            # Extracting labels of values contained in the message
             msg_labels = _parseCString(data[4]).split(",")
             # Convert msg_format to struct.unpack format string
             msg_struct = ""
+            # To store the values corresponding to "msg_labels"
             msg_mults = []
+            # Reading the message according the format defined in "msg_format"
+            # In this loop, we will read the values corresponding to "msg_labels"
             for c in msg_format:
                 try:
+                    # Getting the information about the current value (array)
                     f = self.FORMAT_TO_STRUCT[c]
+                    
                     msg_struct += f[0]
+                    # Getting the value defined in FORMAT_TO_STRUCT
                     msg_mults.append(f[1])
+                    
                 except KeyError as e:
                     raise Exception("Unsupported format char: %s in message %s (%i)" % (c, msg_name, msg_type))
             msg_struct = "<" + msg_struct   # force little-endian
+            # Storing information about the message type (don't know why).
+            # NOTE: if we have several message with the same "type", we will overwrite the information if it
+            # is already in the array '__msg_descrs' ...
             self.__msg_descrs[msg_type] = (msg_length, msg_name, msg_format, msg_labels, msg_struct, msg_mults)
+            # Storing message labels (labels of values)
             self.__msg_labels[msg_name] = msg_labels
+            # Storing the name of the message 
             self.__msg_names.append(msg_name)
             if self.__debug_out:
                 if self.__filterMsg(msg_name) != None:
                     print("MSG FORMAT: type = %i, length = %i, name = %s, format = %s, labels = %s, struct = %s, mults = %s" % (
                                 msg_type, msg_length, msg_name, msg_format, str(msg_labels), msg_struct, msg_mults))
+        # We read a full message so we can update the __ptr value to continue to read at the correct place
         self.__ptr += self.MSG_FORMAT_PACKET_LEN
      
     def jb(self, msg, data):
@@ -381,5 +424,5 @@ if __name__ == "__main__":
     d = p.process('testLog/log.bin')
     print('\n'*10)
     for i in d[-10:]: # les n derniers lignes
-        print(i)
+       print(i)
         
