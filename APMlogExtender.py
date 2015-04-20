@@ -66,12 +66,25 @@ def printMsg(msg):
  
  
  
+def ExtendWithDate(logData):
+    cursDate = None
+    for i in logData:
+        if i[0] == 'GPS':
+            d = parseGPSDate(i[1]['Week'], i[1]['TimeMS'])
+            if not cursDate: cursDate = d
+            i[1]['DateTime'] = str(d)
+    for i in logData: # estimation date autre evenements
+        if i[0] == 'GPS': cursDate = i[1]['DateTime']
+        else: i[1]['DateTime'] = cursDate
+        
+    return logData   
 
-
+def ExtendWithErrText(logData):
+    pass
  
 
-def Extend(logDict):
-    return logDict
+def Extend(logData):
+    return ExtendWithDate(logData)
 
 if __name__ == "__main__":
 
